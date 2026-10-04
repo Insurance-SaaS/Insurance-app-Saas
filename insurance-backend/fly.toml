@@ -1,0 +1,36 @@
+app = 'insurance-backend'
+primary_region = 'sin'
+
+[build]
+
+[deploy]
+  # Runs once per deployment, before the new version takes traffic: brings the
+  # platform database and then every tenant database to the schema this version
+  # expects. A failure aborts the deployment.
+  release_command = "sh -c 'node dist/cli/migrate.js platform && node dist/cli/migrate.js tenants'"
+
+[env]
+  # One proxy hop (fly-proxy): lets rate limiting see the real client address.
+  TRUST_PROXY = '1'
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+  [[http_service.checks]]
+    grace_period = "30s"  # Increased grace period
+    interval = "30s"
+    method = "GET"
+    timeout = "10s"  # Increased timeout
+    # Readiness: 200 only while the platform database and Redis answer.
+    path = "/health/ready"
+    protocol = "http"  # Try http first, then https if needed
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1

@@ -1,0 +1,14 @@
+/.git
+/node_modules
+/dist
+/coverage
+/test
+/docs
+.dockerignore
+.env
+.env.*
+!.env.example
+Dockerfile
+fly.toml
+*.log
+*.md

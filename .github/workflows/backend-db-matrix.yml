@@ -1,0 +1,60 @@
+name: Backend database matrix
+
+# Runs the integration suites against every supported database engine. Each job
+# starts its own database servers through Testcontainers. In every pairing the
+# two test tenants live on different engines, so the same application process
+# serves both: that is the "mixed engines in one deployment" case.
+
+on:
+  push:
+    paths:
+      - 'insurance-backend/src/**/entities/**'
+      - 'insurance-backend/src/core/database/**'
+      - 'insurance-backend/src/database/**'
+      - 'insurance-backend/src/shared/decorators/portable-column.decorator.ts'
+      - 'insurance-backend/test/**'
+      - '.github/workflows/backend-db-matrix.yml'
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  engines:
+    name: platform ${{ matrix.platform }} / second tenant ${{ matrix.second }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { platform: postgres, second: mariadb }
+          - { platform: postgres, second: mysql }
+          - { platform: postgres, second: oracle }
+          - { platform: postgres, second: mssql }
+          - { platform: oracle, second: mssql }
+          - { platform: mysql, second: postgres }
+    defaults:
+      run:
+        working-directory: insurance-backend
+    env:
+      TEST_PLATFORM_ENGINE: ${{ matrix.platform }}
+      TEST_SECOND_ENGINE: ${{ matrix.second }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: insurance-backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Integration tests
+        run: npm run test:e2e

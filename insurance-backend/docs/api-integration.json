@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "meta": {
+    "version": "1.0",
+    "baseUrl": "http://localhost:8000",
+    "prefix": "/api/v1",
+    "requiredHeaders": {
+      "X-Tenant-ID": "Tenant slug (e.g. 'alliance', 'caar'). Required for all tenant-scoped requests.",
+      "Content-Type": "application/json (or multipart/form-data for file uploads)",
+      "Authorization": "Bearer <accessToken> — required for protected routes"
+    },
+    "auth": "JWT in Authorization header. Token from POST /api/v1/auth/login or /api/v1/auth/refresh."
+  },
+  "publicEndpoints": [
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant/config",
+      "description": "Get tenant config (branding, enabled components, languages). No auth. Requires X-Tenant-ID.",
+      "response": { "name": "string", "branding": "object", "enabledComponents": "string[]", "supportedLanguages": "string[]", "defaultLanguage": "string", "customFields": "object" }
+    },
+    {
+      "method": "GET",
+      "path": "/health",
+      "description": "Liveness check. No prefix, no auth, no tenant header."
+    },
+    {
+      "method": "GET",
+      "path": "/health/ready",
+      "description": "Readiness check: 200 while the platform database and Redis answer, 503 otherwise. No prefix, no auth, no tenant header.",
+      "response": { "status": "ok | unavailable", "checks": { "database": "ok | failed", "redis": "ok | failed" } }
+    }
+  ],
+  "auth": [
+    { "method": "POST", "path": "/api/v1/auth/signup", "body": "email, username, password, etc.", "auth": false },
+    { "method": "POST", "path": "/api/v1/auth/verify-otp-email", "body": "email, otp", "auth": false },
+    { "method": "POST", "path": "/api/v1/auth/verify-otp-sms", "body": "phone, otp", "auth": false },
+    { "method": "POST", "path": "/api/v1/auth/verify-otp", "body": "email or phone, otp", "auth": false },
+    { "method": "POST", "path": "/api/v1/auth/send-otp-sms", "body": "phone", "auth": false },
+    { "method": "POST", "path": "/api/v1/auth/resend-otp-sms", "body": "phone", "auth": false },
+    { "method": "POST", "path": "/api/v1/auth/resend-otp-email", "body": "email", "auth": false },
+    { "method": "POST", "path": "/api/v1/auth/reset-password-otp", "body": "email", "auth": false },
+    { "method": "POST", "path": "/api/v1/auth/verify-otp-reset", "body": "email, otp", "auth": false },
+    { "method": "PATCH", "path": "/api/v1/auth/reset-password", "body": "email, otp, newPassword", "auth": false },
+    { "method": "POST", "path": "/api/v1/auth/login", "body": "email, password", "auth": false, "response": "accessToken, refreshToken, user" },
+    { "method": "POST", "path": "/api/v1/auth/refresh", "body": "refreshToken", "auth": false, "response": "accessToken, refreshToken" },
+    { "method": "GET", "path": "/api/v1/auth/google", "description": "Redirect to Google OAuth", "auth": false },
+    { "method": "GET", "path": "/api/v1/auth/google/redirect", "description": "OAuth callback", "auth": false },
+    { "method": "POST", "path": "/api/v1/auth/google/mobile", "body": "idToken or id_token", "auth": false, "response": "accessToken, refreshToken, user" },
+    { "method": "PATCH", "path": "/api/v1/auth/change-password", "body": "currentPassword, newPassword", "auth": true },
+    { "method": "GET", "path": "/api/v1/auth/profile", "auth": true, "response": "user" },
+    { "method": "PATCH", "path": "/api/v1/auth/update-profile", "body": "username, preferredLanguage, etc.", "auth": true },
+    { "method": "POST", "path": "/api/v1/auth/logout", "auth": true },
+    { "method": "PATCH", "path": "/api/v1/auth/upload-profile-picture", "body": "multipart file", "auth": true },
+    { "method": "POST", "path": "/api/v1/auth/send-otp-delete", "body": "email", "auth": true },
+    { "method": "POST", "path": "/api/v1/auth/delete-account", "body": "email, otp", "auth": true }
+  ],
+  "users": [
+    { "method": "GET", "path": "/api/v1/users", "auth": true, "query": "optional filters" },
+    { "method": "GET", "path": "/api/v1/users/:id", "auth": true, "params": ["id: UUID"] },
+    { "method": "GET", "path": "/api/v1/users/email/:email", "auth": true },
+    { "method": "GET", "path": "/api/v1/users/phone/:phone", "auth": true },
+    { "method": "POST", "path": "/api/v1/users", "body": "username, email, password, role?, preferredLanguage?, customFields?", "auth": true },
+    { "method": "PATCH", "path": "/api/v1/users/:id", "body": "partial user", "auth": true },
+    { "method": "PATCH", "path": "/api/v1/users/:id/photo", "body": "multipart file", "auth": true },
+    { "method": "POST", "path": "/api/v1/users/forgot-password", "body": "email", "auth": false },
+    { "method": "DELETE", "path": "/api/v1/users/:id", "auth": true }
+  ],
+  "quotes": [
+    { "method": "POST", "path": "/api/v1/quotes/compare", "body": "devisAId, devisBId", "auth": true, "query": "lang (en|fr|ar)" },
+    { "method": "GET", "path": "/api/v1/quotes/recommended", "query": "productType, age, codePostal, budget, vehicleType?, lang?", "auth": true, "response": "total, data[]" },
+    { "method": "GET", "path": "/api/v1/quotes/products", "query": "lang?", "auth": true, "response": "product types" },
+    { "method": "GET", "path": "/api/v1/quotes/by-product", "query": "productType", "auth": true },
+    { "method": "GET", "path": "/api/v1/quotes/by-product/:productType", "auth": true },
+    { "method": "GET", "path": "/api/v1/quotes/:id", "auth": true, "response": "quote details with product, coverageDetails, payments, summaryTerms" },
+    { "method": "GET", "path": "/api/v1/quotes", "auth": true }
+  ],
+  "claims": [
+    { "method": "POST", "path": "/api/v1/claims/declare", "contentType": "multipart/form-data", "body": "description, dateIncident, lieuIncident, typeIncident?, files[]?", "auth": true, "response": "success, message, data (claim with numDossier)" },
+    { "method": "GET", "path": "/api/v1/claims/my-claims", "auth": true, "response": "claims list" },
+    { "method": "PATCH", "path": "/api/v1/claims/:id/status", "body": "status", "auth": true },
+    { "method": "DELETE", "path": "/api/v1/claims/:id", "auth": true },
+    { "method": "GET", "path": "/api/v1/claims/:id", "auth": true },
+    { "method": "POST", "path": "/api/v1/claims/validate-location", "body": "location data", "auth": true }
+  ],
+  "contractsAndErp": [
+    { "method": "POST", "path": "/api/v1/contract", "body": "devisId, startDate, endDate, customFields?", "auth": true },
+    { "method": "GET", "path": "/api/v1/contract", "query": "lang?", "auth": true },
+    { "method": "GET", "path": "/api/v1/contract/:id", "query": "lang?", "auth": true },
+    { "method": "POST", "path": "/api/v1/erp/mappings", "body": "externalAccountId, userId", "auth": true },
+    { "method": "GET", "path": "/api/v1/erp/mappings", "auth": true },
+    { "method": "GET", "path": "/api/v1/erp/mappings/account/:externalAccountId", "auth": true },
+    { "method": "GET", "path": "/api/v1/erp/mappings/me", "auth": true },
+    { "method": "GET", "path": "/api/v1/erp/mappings/user/:userId", "auth": true },
+    { "method": "PUT", "path": "/api/v1/erp/mappings/:externalAccountId", "body": "userId", "auth": true },
+    { "method": "DELETE", "path": "/api/v1/erp/mappings/:externalAccountId", "auth": true }
+  ],
+  "branchesAndContacts": [
+    { "method": "GET", "path": "/api/v1/branches", "auth": true },
+    { "method": "GET", "path": "/api/v1/branches/map", "auth": true },
+    { "method": "GET", "path": "/api/v1/branches/:id", "params": ["id: UUID"], "auth": true },
+    { "method": "GET", "path": "/api/v1/branches/code/:code", "auth": true },
+    { "method": "POST", "path": "/api/v1/branches", "body": "branch data", "auth": true },
+    { "method": "POST", "path": "/api/v1/branches/bulk", "body": "branches[]", "auth": true },
+    { "method": "PUT", "path": "/api/v1/branches/:id", "body": "partial branch", "auth": true },
+    { "method": "DELETE", "path": "/api/v1/branches/:id", "auth": true },
+    { "method": "GET", "path": "/api/v1/contacts", "auth": true },
+    { "method": "GET", "path": "/api/v1/contacts/type/:type", "auth": true },
+    { "method": "GET", "path": "/api/v1/contacts/:id", "params": ["id: UUID"], "auth": true },
+    { "method": "POST", "path": "/api/v1/contacts", "body": "contact data", "auth": true },
+    { "method": "POST", "path": "/api/v1/contacts/bulk", "body": "contacts[]", "auth": true },
+    { "method": "PUT", "path": "/api/v1/contacts/:id", "body": "partial contact", "auth": true },
+    { "method": "DELETE", "path": "/api/v1/contacts/:id", "auth": true }
+  ],
+  "notifications": [
+    { "method": "GET", "path": "/api/v1/notifications", "auth": true },
+    { "method": "GET", "path": "/api/v1/notifications/unread-count", "auth": true },
+    { "method": "GET", "path": "/api/v1/notifications/:notificationId", "auth": true },
+    { "method": "PATCH", "path": "/api/v1/notifications/:notificationId/read", "auth": true },
+    { "method": "PATCH", "path": "/api/v1/notifications/read/bulk", "body": "notificationIds[]", "auth": true },
+    { "method": "PATCH", "path": "/api/v1/notifications/read/all", "auth": true },
+    { "method": "DELETE", "path": "/api/v1/notifications/:notificationId", "auth": true },
+    { "method": "DELETE", "path": "/api/v1/notifications", "auth": true },
+    { "method": "POST", "path": "/api/v1/notifications/device-tokens", "body": "token, platform?", "auth": true },
+    { "method": "GET", "path": "/api/v1/notifications/device-tokens", "auth": true },
+    { "method": "DELETE", "path": "/api/v1/notifications/device-tokens/:tokenId", "auth": true },
+    { "method": "POST", "path": "/api/v1/notifications/test", "body": "test payload", "auth": true }
+  ],
+  "ai": [
+    { "method": "POST", "path": "/api/v1/ai/chat", "body": "message, sessionId?, language?, etc.", "auth": true },
+    { "method": "POST", "path": "/api/v1/ai/chat/with-images", "contentType": "multipart/form-data", "body": "message, sessionId?, images[]?", "auth": true },
+    { "method": "POST", "path": "/api/v1/ai/analyze-image", "body": "image or multipart", "auth": true },
+    { "method": "GET", "path": "/api/v1/ai/context/:sessionId", "auth": true },
+    { "method": "DELETE", "path": "/api/v1/ai/context/:sessionId", "auth": true },
+    { "method": "GET", "path": "/api/v1/ai/languages", "auth": true },
+    { "method": "GET", "path": "/api/v1/ai/fields/claim", "auth": true },
+    { "method": "GET", "path": "/api/v1/ai/fields/quotes/:conversationType", "auth": true },
+    { "method": "GET", "path": "/api/v1/ai/suggestions/:sessionId", "auth": true },
+    { "method": "GET", "path": "/api/v1/ai/graph", "auth": true },
+    { "method": "GET", "path": "/api/v1/ai/usage/:sessionId", "auth": true }
+  ],
+  "translation": [
+    { "method": "POST", "path": "/api/v1/translation/translate", "body": "text, targetLang, sourceLang?", "auth": true },
+    { "method": "GET", "path": "/api/v1/translation/languages", "auth": false },
+    { "method": "GET", "path": "/api/v1/translation/health", "auth": false }
+  ],
+  "logs": [
+    { "method": "POST", "path": "/api/v1/logs/signup-log", "body": "log data", "auth": true },
+    { "method": "POST", "path": "/api/v1/logs/create-log", "body": "log data", "auth": true },
+    { "method": "GET", "path": "/api/v1/logs", "auth": true },
+    { "method": "GET", "path": "/api/v1/logs/by-user", "auth": true }
+  ],
+  "customFields": [
+    { "method": "GET", "path": "/api/v1/custom-fields", "query": "entityType", "auth": true, "description": "Current tenant definitions" },
+    { "method": "GET", "path": "/api/v1/platform/tenants/:tenantId/custom-fields", "query": "entityType", "auth": true, "platformAdmin": true },
+    { "method": "POST", "path": "/api/v1/platform/tenants/:tenantId/custom-fields", "body": "definition", "auth": true, "platformAdmin": true },
+    { "method": "PATCH", "path": "/api/v1/platform/tenants/:tenantId/custom-fields/:id", "body": "partial definition", "auth": true, "platformAdmin": true },
+    { "method": "DELETE", "path": "/api/v1/platform/tenants/:tenantId/custom-fields/:id", "auth": true, "platformAdmin": true }
+  ],
+  "platformAdmin": [
+    { "method": "POST", "path": "/api/v1/platform/admin-auth/login", "body": "email, password, tenantSlug?", "auth": false, "response": "accessToken, refreshToken, admin" },
+    { "method": "POST", "path": "/api/v1/platform/admin-auth/refresh", "body": "refreshToken", "auth": false },
+    { "method": "GET", "path": "/api/v1/platform/tenants", "auth": true, "guard": "PlatformAdminGuard" },
+    { "method": "GET", "path": "/api/v1/platform/tenants/:tenantId", "auth": true, "guard": "PlatformAdminGuard" },
+    { "method": "POST", "path": "/api/v1/platform/tenants", "body": "CreateTenantDto", "auth": true, "guard": "PlatformAdminGuard" },
+    { "method": "PATCH", "path": "/api/v1/platform/tenants/:tenantId", "body": "UpdateTenantDto", "auth": true, "guard": "PlatformAdminGuard" },
+    { "method": "GET", "path": "/api/v1/platform/tenants/:tenantId/components", "auth": true, "guard": "PlatformAdminGuard" },
+    { "method": "PUT", "path": "/api/v1/platform/tenants/:tenantId/components", "body": "components[]", "auth": true, "guard": "PlatformAdminGuard" },
+    { "method": "POST", "path": "/api/v1/platform/tenants/onboard", "body": "OnboardTenantDto (tenant, tenantAdmin, components, runMigrations?)", "auth": true, "guard": "PlatformAdminGuard" },
+    { "method": "POST", "path": "/api/v1/platform/tenants/:tenantSlug/migrations/run", "auth": true, "guard": "PlatformAdminGuard" },
+    { "method": "POST", "path": "/api/v1/platform/tenants/migrations/run-all", "auth": true, "guard": "PlatformAdminGuard" },
+    { "method": "POST", "path": "/api/v1/platform/tenants/:tenantSlug/migrations/rollback-last", "auth": true, "guard": "PlatformAdminGuard" },
+    { "method": "POST", "path": "/api/v1/platform/tenants/migrations/rollback-last-all", "auth": true, "guard": "PlatformAdminGuard" }
+  ],
+  "misc": [
+    { "method": "GET", "path": "/api/v1", "description": "Root API info", "auth": false }
+  ],
+  "integrationChecklist": [
+    "1. Set baseUrl (e.g. https://api.yourdomain.com or http://localhost:8000)",
+    "2. Set X-Tenant-ID header per app (e.g. 'alliance', 'caar')",
+    "3. Call GET /api/v1/tenant/config at startup to get branding and enabledComponents",
+    "4. Implement login (POST /api/v1/auth/login) or Google (POST /api/v1/auth/google/mobile)",
+    "5. Store accessToken and refreshToken; send Authorization: Bearer <accessToken> on every request",
+    "6. On 401, call POST /api/v1/auth/refresh with refreshToken to get new tokens",
+    "7. Use Accept-Language or query param lang (en|fr|ar) where supported"
+  ]
+}

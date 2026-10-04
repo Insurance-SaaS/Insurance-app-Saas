@@ -1,0 +1,170 @@
+ 9. Intégration ERP
+Dans le cadre de l’intégration avec le système ERP d’Alliance Assurances, la documentation technique devra être fournie par le client. Cette documentation doit inclure les éléments suivants :
+
+9.1. Endpoints requis
+Cette section a été ajustée selon l’implémentation réelle de l’application. L’intégration ERP couvre quatre besoins concrets: (1) vérification de l’allianceId, (2) émission du mapping lors de la confirmation d’un devis, (3) envoi d’un sinistre créé, (4) envoi d’un contrat créé. Les données de devis proviennent de l’ERP, mais leur génération et traitement sont gérés en interne par l’application; leur schéma est fourni à titre de référence uniquement.
+
+9.1.1. F1 – Vérification & Mapping de Compte (AllianceId)
+
+GET /accounts/{allianceId}
+Objectif: vérifier l’existence de l’allianceId côté ERP avant toute action.
+Entrées: { allianceId }
+Sorties: { exists: bool, account?: { id: string, name?: string, status?: string } }
+
+POST /mappings
+Objectif: notifier le mapping créé lors de la confirmation d’un devis.
+Entrées: { allianceId: string, externalUserRef?: string }
+Sorties: { confirmation: bool, mappingId?: string }
+
+
+9.1.2. F3 – Déclaration de Sinistre (Push depuis l’app)
+
+POST /sinistres
+Objectif: transmettre au système ERP le sinistre créé dans l’app.
+Entrées: {
+  type_incident: string,
+  date_incident: date (YYYY-MM-DD),
+  heure_incident?: string (HH:mm),
+  lieu: string,
+  description?: string,
+  parts_endommagees?: [string],
+  rayures?: [string],
+  bosses?: [string],
+  dommages_poignee?: [string],
+  documents?: [ { fileName: string, contentType?: string, fileUrl: string } ]
+}
+Sorties: { id_sinistre: UUID, num_dossier: string, statut: string }
+
+PUT /sinistres/{id}/statut
+Objectif: mise à jour du statut côté ERP (si piloté par ERP).
+Entrées: { statut: 'SUBMITTED' | 'IN_REVIEW' | 'APPROVED' | 'REJECTED' | 'CLOSED' }
+Sorties: { confirmation: bool }
+
+
+9.1.3. F4 – OSD & Indemnisation (Lecture)
+
+GET /sinistres/{id}/osd
+Entrées: { }
+Sorties: {
+  id_sinistre: UUID,
+  expert?: { id: UUID, fullName: string, email: string, phoneNumber?: string },
+  date_evaluation?: date
+}
+
+GET /sinistres/{id}/indemnisation
+Entrées: { }
+Sorties: {
+  id_sinistre: UUID,
+  montant_total?: number,
+  cout_reparation?: number,
+  cout_evaluation?: number,
+  frais_supplementaires?: number,
+  statut: string
+}
+
+
+9.1.4. F5 – Création de Contrat (Push depuis l’app)
+
+POST /contrats
+Objectif: transmettre au système ERP le contrat créé à partir d’un devis sélectionné.
+Entrées: {
+  devis_id: UUID,
+  allianceId: string,
+  start_date: date (YYYY-MM-DD),
+  end_date: date (YYYY-MM-DD)
+}
+Sorties: {
+  id_contrat: UUID,
+  title: string,
+  type: string,
+  statut: 'active' | 'expired',
+  start_date: date,
+  end_date: date,
+  devis: { id: UUID, type: string, title: string },
+  allianceId: string
+}
+
+
+9.1.5. F2 – Devis & Recommandation (Référence uniquement)
+
+Remarque: les données de devis proviennent de l’ERP, mais la génération, le filtrage et les recommandations sont gérés par l’application. Aucun endpoint ERP n’est requis pour créer ou lister des devis depuis l’app. Pour cohérence des formats, voici le schéma de référence d’un devis tel qu’utilisé par l’app:
+Devis (référence): {
+  id: UUID,
+  planOverview: { planType: string, priceMonthly: number, deductible: number, termMonths: number, startCondition?: string },
+  payments: [ { type: string, amount: number, mode: string } ],
+  coverageDetails: [ { label: string, included: boolean } ],
+  summaryTerms?: { contractValidity: string, cancelPolicy: string, claimsProcessing: string, docsStorage: string }
+}
+
+
+9.2. Produits concernés
+        L’application doit gérer les produits suivants (liste initiale non limitative) :
+
+9.2.1. Liste des produits
+- Assurance automobile
+- Assurance automobile avec option de paiement fractionné
+- Assurance habitation
+- Assurance scolaire
+- Assurance bateau de plaisance
+- Assurance catastrophes naturelles (CAT-NAT)
+- Assurance multirisques professionnelle (MRP)
+
+Attendu de la part de l’ERP :
+Une description détaillée de chaque produit 
+
+
+9.2.2. Extension – Nouveaux produits et devis
+Lorsque de nouveaux produits sont ajoutés, l’ERP doit fournir (ou valider) les informations suivantes afin d’assurer une intégration homogène:
+- Métadonnées produit: { id_produit: UUID, type: string (multilingue recommandé), description?: string }
+- Paramètres de tarification de référence (si exposés par ERP): { planType:{en,fr,ar}, priceMonthly: number, deductible: number, termMonths: number, startCondition:{en,fr,ar} }
+- Options/garanties (si exposées par ERP): [ { label:{en,fr,ar}, included: boolean } ]
+- Termes de synthèse (si exposés par ERP): { contractValidity:{en,fr,ar}, cancelPolicy:{en,fr,ar}, claimsProcessing:{en,fr,ar}, docsStorage:{en,fr,ar} }
+
+Remarques importantes:
+- Les données de devis proviennent de l’ERP, mais la génération, le filtrage et les recommandations sont gérés côté application; aucun endpoint ERP n’est requis pour créer/lister des devis depuis l’app. Toutefois, si l’ERP souhaite pousser des gabarits/paramètres par produit, ils doivent respecter le schéma de référence ci-dessous.
+- Chaque nouveau produit doit avoir un identifiant stable (UUID) et des libellés multilingues pour cohérence avec l’app.
+- Toute évolution de structure doit être versionnée pour éviter les ruptures.
+
+Schéma de référence pour un devis (nouveau produit):
+Devis (référence): {
+  id: UUID,
+  planOverview: { planType: string, priceMonthly: number, deductible: number, termMonths: number, startCondition?: string },
+  payments: [ { type: string, amount: number, mode: string } ],
+  coverageDetails: [ { label: string, included: boolean } ],
+  summaryTerms?: { contractValidity: string, cancelPolicy: string, claimsProcessing: string, docsStorage: string }
+}
+
+
+9.3. Formats et Standards d’Intégration
+La documentation ERP devra également préciser :
+- Format d’échange : JSON via API REST (recommandé).
+- Méthodes HTTP utilisées : GET, POST, PUT/PATCH, DELETE.
+- Gestion des erreurs : codes HTTP (200, 400, 401, 404, 500) avec description claire.
+- Et toute autre information qui pourra être utile pendant développement de l’application.
+
+
+9.4. Résumé synthétique des besoins d’intégration ERP
+
+Besoins critiques (Push depuis l’application vers ERP):
+1. Vérification allianceId: GET /accounts/{allianceId}
+   → Vérifier l’existence du compte avant toute opération
+
+2. Notification mapping: POST /mappings
+   → Notifier la création du mapping lors de la confirmation d’un devis
+
+3. Envoi sinistre: POST /sinistres
+   → Transmettre chaque sinistre créé dans l’application
+   → Optionnel: PUT /sinistres/{id}/statut (mise à jour de statut pilotée par ERP)
+
+4. Envoi contrat: POST /contrats
+   → Transmettre chaque contrat créé à partir d’un devis sélectionné
+
+Besoins de lecture (Pull depuis ERP vers l’application):
+5. OSD & Indemnisation: 
+   → GET /sinistres/{id}/osd (informations expert assigné)
+   → GET /sinistres/{id}/indemnisation (détails d’indemnisation)
+
+Notes importantes:
+- Les données de devis proviennent de l’ERP, mais la génération, le filtrage et les recommandations sont gérés en interne par l’application; aucun endpoint ERP n’est requis pour créer ou lister des devis depuis l’app
+- Pour les nouveaux produits, voir section 9.2.2 (Extension – Nouveaux produits et devis)
+- Format d’échange: JSON via API REST (voir section 9.3)
