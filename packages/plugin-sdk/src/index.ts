@@ -1,5 +1,5 @@
 /**
- * @insurance/plugin-sdk
+ * @insurance-app-saas/plugin-sdk
  *
  * The official SDK for building external plugins for the
  * @insurance platform. Install this as a dependency in your
@@ -7,14 +7,14 @@
  * interfaces, and decorators you need.
  *
  * Usage:
- *   npm install @insurance/plugin-sdk
+ *   npm install @insurance-app-saas/plugin-sdk
  *
  *   import {
  *     InsurancePlugin, PLUGIN_ENTRY_KEY,
  *     PluginManifest, pluginId,
  *     CACHE_SERVICE, USERS_SERVICE,
  *     RequiresPlugin,
- *   } from '@insurance/plugin-sdk';
+ *   } from '@insurance-app-saas/plugin-sdk';
  */
 
 // Plugin contract

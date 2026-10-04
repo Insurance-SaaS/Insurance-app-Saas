@@ -1,5 +1,5 @@
 /**
- * @insurance/plugin-sdk — InsurancePlugin Interface
+ * @insurance-app-saas/plugin-sdk — InsurancePlugin Interface
  *
  * This is the main contract that every external plugin npm package
  * must satisfy. The platform's PluginLoaderService scans node_modules

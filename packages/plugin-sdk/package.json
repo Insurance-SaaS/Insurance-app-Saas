@@ -1,5 +1,5 @@
 {
-  "name": "@cw-insurance-saas/plugin-sdk",
+  "name": "@insurance-app-saas/plugin-sdk",
   "version": "1.0.0",
   "description": "SDK for building @insurance platform plugins as external npm packages",
   "main": "dist/index.js",
@@ -19,7 +19,7 @@
     "plugin",
     "sdk",
     "nestjs",
-    "cw-insurance-saas"
+    "insurance-app-saas"
   ],
   "repository": {
     "type": "git",

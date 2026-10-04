@@ -1,5 +1,5 @@
 /**
- * @insurance/plugin-sdk — Plugin Manifest
+ * @insurance-app-saas/plugin-sdk — Plugin Manifest
  *
  * Every plugin must export a manifest describing itself.
  * The platform's PluginRegistryService collects manifests at bootstrap

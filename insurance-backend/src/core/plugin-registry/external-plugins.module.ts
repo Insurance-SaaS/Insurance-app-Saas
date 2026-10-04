@@ -8,7 +8,7 @@ import { PluginLoaderService } from './plugin-loader.service';
  *
  * ExternalPluginsModule
  *
- * A dynamic NestJS module that scans node_modules/@cw-insurance-saas/*
+ * A dynamic NestJS module that scans node_modules/@insurance-app-saas/*
  * for external plugin packages and imports their modules.
  *
  * Usage in main.ts or AppModule:

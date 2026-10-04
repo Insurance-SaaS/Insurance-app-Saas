@@ -14,12 +14,12 @@ export interface ExternalPluginEntry {
 }
 
 const PLUGIN_ENTRY_KEY = 'PLUGIN_ENTRY';
-const NAMESPACE_DIR = '@cw-insurance-saas';
+const NAMESPACE_DIR = '@insurance-app-saas';
 
 /**
  * PluginLoaderService
  *
- * Scans `node_modules/@cw-insurance-saas/*` at boot time for npm packages
+ * Scans `node_modules/@insurance-app-saas/*` at boot time for npm packages
  * that export a `PLUGIN_ENTRY` constant satisfying ExternalPluginEntry.
  *
  * The discovered modules are imported dynamically into the NestJS app
@@ -31,7 +31,7 @@ export class PluginLoaderService {
   private readonly discovered: ExternalPluginEntry[] = [];
 
   /**
-   * Scan `node_modules/@cw-insurance-saas/` for plugin packages.
+   * Scan `node_modules/@insurance-app-saas/` for plugin packages.
    * Call this during application bootstrap, before NestFactory.create().
    *
    * @param nodeModulesPath  Absolute path to node_modules (default: auto-detect)
@@ -66,7 +66,7 @@ export class PluginLoaderService {
           );
         }
       } catch (err: any) {
-        this.logger.warn(`Failed to load @cw-insurance-saas/${entry.name}: ${err.message}`);
+        this.logger.warn(`Failed to load @insurance-app-saas/${entry.name}: ${err.message}`);
       }
     }
 
@@ -105,12 +105,12 @@ export class PluginLoaderService {
 
     const pkgJson = JSON.parse(readFileSync(pkgJsonPath, 'utf-8'));
 
-    // 2. Check for the @insurance/plugin-sdk marker in dependencies/peerDependencies
+    // 2. Check for the @insurance-app-saas/plugin-sdk marker in dependencies/peerDependencies
     const allDeps = {
       ...pkgJson.dependencies,
       ...pkgJson.peerDependencies,
     };
-    const hasSDK = '@cw-insurance-saas/plugin-sdk' in (allDeps || {});
+    const hasSDK = '@insurance-app-saas/plugin-sdk' in (allDeps || {});
     const hasInsuranceKeyword = (pkgJson.keywords || []).includes('insurance-plugin');
 
     if (!hasSDK && !hasInsuranceKeyword) {
@@ -124,7 +124,7 @@ export class PluginLoaderService {
 
     if (!exported[PLUGIN_ENTRY_KEY]) {
       this.logger.warn(
-        `@cw-insurance-saas/${shortName} has plugin-sdk dep but no ${PLUGIN_ENTRY_KEY} export — skipping`,
+        `@insurance-app-saas/${shortName} has plugin-sdk dep but no ${PLUGIN_ENTRY_KEY} export — skipping`,
       );
       return null;
     }
@@ -134,14 +134,14 @@ export class PluginLoaderService {
     // 4. Validate the entry shape
     if (!pluginEntry.manifest || !pluginEntry.module) {
       this.logger.warn(
-        `@cw-insurance-saas/${shortName}: ${PLUGIN_ENTRY_KEY} is missing 'manifest' or 'module' — skipping`,
+        `@insurance-app-saas/${shortName}: ${PLUGIN_ENTRY_KEY} is missing 'manifest' or 'module' — skipping`,
       );
       return null;
     }
 
     if (!pluginEntry.manifest.id || !pluginEntry.manifest.version) {
       this.logger.warn(
-        `@cw-insurance-saas/${shortName}: manifest is missing 'id' or 'version' — skipping`,
+        `@insurance-app-saas/${shortName}: manifest is missing 'id' or 'version' — skipping`,
       );
       return null;
     }

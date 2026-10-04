@@ -1,6 +1,6 @@
 # Building an Insurance App with @insurance Plugins — Complete Guide
 
-> This guide walks you through creating a new insurance application from scratch, using the `@cw-insurance-saas/plugin-sdk` and the insurance backend platform.
+> This guide walks you through creating a new insurance application from scratch, using the `@insurance-app-saas/plugin-sdk` and the insurance backend platform.
 
 ---
 
@@ -841,12 +841,12 @@ When you need a feature not covered by the built-in plugins (e.g. loyalty progra
 
 ```bash
 mkdir insurance-loyalty-plugin && cd insurance-loyalty-plugin
-npm init -y --scope=@cw-insurance-saas
+npm init -y --scope=@insurance-app-saas
 
 # Configure npm for GitHub Packages
-echo "@cw-insurance-saas:registry=https://npm.pkg.github.com" > .npmrc
+echo "@insurance-app-saas:registry=https://npm.pkg.github.com" > .npmrc
 
-npm install @cw-insurance-saas/plugin-sdk
+npm install @insurance-app-saas/plugin-sdk
 npm install -D typescript @nestjs/common @nestjs/core typeorm @types/node
 ```
 
@@ -866,7 +866,7 @@ Key files to create:
 
 ```bash
 cd Insurance-app-Saas/insurance-backend
-npm install @cw-insurance-saas/loyalty-plugin
+npm install @insurance-app-saas/loyalty-plugin
 npm run start:dev
 # Logs: "Discovered external plugin: @insurance/loyalty v1.0.0"
 ```

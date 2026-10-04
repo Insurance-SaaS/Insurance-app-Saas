@@ -1,5 +1,5 @@
 /**
- * @insurance/plugin-sdk — Injection Tokens
+ * @insurance-app-saas/plugin-sdk — Injection Tokens
  *
  * These symbols are shared between the platform core and external plugins.
  * Plugins use these tokens to inject platform services without

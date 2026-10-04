@@ -28,17 +28,17 @@
 
 This guide shows how to build an external plugin that can be installed via `npm install` and automatically loaded by the @insurance platform.
 
-> **Scope note**: The npm package scope is `@cw-insurance-saas/` (for GitHub Packages distribution).  
+> **Scope note**: The npm package scope is `@insurance-app-saas/` (for GitHub Packages distribution).  
 > The internal plugin namespace is `@insurance/` (used in manifest IDs like `@insurance/my-plugin`).  
 > These are two separate concepts — don't confuse them.
 
 ## Prerequisites
 
-Configure your npm to read from the CW-Insurance-SaaS GitHub Packages registry:
+Configure your npm to read the `@insurance-app-saas` scope from the GitHub Packages registry:
 
 ```bash
 # ~/.npmrc (or project .npmrc)
-@cw-insurance-saas:registry=https://npm.pkg.github.com
+@insurance-app-saas:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=YOUR_GITHUB_PAT
 ```
 
@@ -49,15 +49,15 @@ You need a GitHub Personal Access Token (classic) with `read:packages` scope. ([
 ```bash
 # Create plugin package
 mkdir my-plugin && cd my-plugin
-npm init -y --scope=@cw-insurance-saas
-npm install @cw-insurance-saas/plugin-sdk
+npm init -y --scope=@insurance-app-saas
+npm install @insurance-app-saas/plugin-sdk
 npm install -D typescript @nestjs/common @nestjs/core typeorm
 ```
 
 ## Plugin Structure
 
 ```
-@cw-insurance-saas/my-plugin/
+@insurance-app-saas/my-plugin/
 ├── package.json
 ├── tsconfig.json
 └── src/
@@ -76,7 +76,7 @@ npm install -D typescript @nestjs/common @nestjs/core typeorm
 
 ```json
 {
-  "name": "@cw-insurance-saas/my-plugin",
+  "name": "@insurance-app-saas/my-plugin",
   "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -92,7 +92,7 @@ npm install -D typescript @nestjs/common @nestjs/core typeorm
     "typeorm": ">=0.3.0"
   },
   "dependencies": {
-    "@cw-insurance-saas/plugin-sdk": "^1.0.0"
+    "@insurance-app-saas/plugin-sdk": "^1.0.0"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com",
@@ -104,7 +104,7 @@ npm install -D typescript @nestjs/common @nestjs/core typeorm
 ### 2. Manifest (my-plugin.manifest.ts)
 
 ```typescript
-import { PluginManifest, pluginId } from '@cw-insurance-saas/plugin-sdk';
+import { PluginManifest, pluginId } from '@insurance-app-saas/plugin-sdk';
 
 export const MY_PLUGIN_MANIFEST: PluginManifest = {
   id: pluginId('my-plugin'),       // => '@insurance/my-plugin'
@@ -143,7 +143,7 @@ export class MyEntity {
 
 ```typescript
 import { Injectable, Inject } from '@nestjs/common';
-import { USERS_SERVICE, IUsersService, CACHE_SERVICE, ICacheService } from '@cw-insurance-saas/plugin-sdk';
+import { USERS_SERVICE, IUsersService, CACHE_SERVICE, ICacheService } from '@insurance-app-saas/plugin-sdk';
 import { TenantRepositoryFactory } from '???'; // See note below
 import { MyEntity } from './entities/my-entity.entity';
 
@@ -167,7 +167,7 @@ export class MyPluginService {
 
 ```typescript
 import { Controller, Get, UseGuards } from '@nestjs/common';
-import { RequiresPlugin } from '@cw-insurance-saas/plugin-sdk';
+import { RequiresPlugin } from '@insurance-app-saas/plugin-sdk';
 import { MyPluginService } from './my-plugin.service';
 
 @Controller('my-plugin')
@@ -200,7 +200,7 @@ export class MyPluginModule {}
 ### 7. Entry Point (index.ts) — **CRITICAL**
 
 ```typescript
-import { InsurancePlugin, PLUGIN_ENTRY_KEY } from '@cw-insurance-saas/plugin-sdk';
+import { InsurancePlugin, PLUGIN_ENTRY_KEY } from '@insurance-app-saas/plugin-sdk';
 import { MY_PLUGIN_MANIFEST } from './my-plugin.manifest';
 import { MyPluginModule } from './my-plugin.module';
 import { MyEntity } from './entities/my-entity.entity';
@@ -217,11 +217,11 @@ export { MY_PLUGIN_MANIFEST, MyPluginModule, MyPluginService } from './my-plugin
 
 ## How It Works
 
-1. You `npm install @cw-insurance-saas/my-plugin` in the platform project
-2. At boot, `PluginLoaderService` scans `node_modules/@cw-insurance-saas/*`
+1. You `npm install @insurance-app-saas/my-plugin` in the platform project
+2. At boot, `PluginLoaderService` scans `node_modules/@insurance-app-saas/*`
 3. It finds your package because:
-   - It's in the `@cw-insurance-saas/` namespace
-   - It depends on `@cw-insurance-saas/plugin-sdk` (or has `insurance-plugin` keyword)
+   - It's in the `@insurance-app-saas/` namespace
+   - It depends on `@insurance-app-saas/plugin-sdk` (or has `insurance-plugin` keyword)
    - It exports `PLUGIN_ENTRY`
 4. The platform:
    - Imports your `MyPluginModule` into the NestJS app
@@ -249,7 +249,7 @@ export { MY_PLUGIN_MANIFEST, MyPluginModule, MyPluginService } from './my-plugin
 ```bash
 # Create a GitHub PAT with write:packages scope
 # Then login:
-npm login --scope=@cw-insurance-saas --registry=https://npm.pkg.github.com
+npm login --scope=@insurance-app-saas --registry=https://npm.pkg.github.com
 # Username: your-github-username
 # Password: your-github-pat
 # Email: your-email
@@ -268,11 +268,11 @@ The `publishConfig` in your `package.json` ensures it goes to GitHub Packages au
 
 ```bash
 # In any insurance app repo, add to .npmrc:
-@cw-insurance-saas:registry=https://npm.pkg.github.com
+@insurance-app-saas:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=YOUR_GITHUB_PAT
 
 # Then install:
-npm install @cw-insurance-saas/my-plugin
+npm install @insurance-app-saas/my-plugin
 ```
 
 ## Testing Locally
@@ -283,7 +283,7 @@ cd my-plugin
 npm link
 
 cd ../insurance-backend
-npm link @cw-insurance-saas/my-plugin
+npm link @insurance-app-saas/my-plugin
 npm run start:dev
 # Check logs for: "Discovered external plugin: @insurance/my-plugin v1.0.0"
 

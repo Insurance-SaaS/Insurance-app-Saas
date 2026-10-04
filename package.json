@@ -5,8 +5,8 @@
         "packages/*"
     ],
     "scripts": {
-        "build:sdk": "npm run build --workspace=@cw-insurance-saas/plugin-sdk",
-        "publish:sdk": "npm publish --workspace=@cw-insurance-saas/plugin-sdk"
+        "build:sdk": "npm run build --workspace=@insurance-app-saas/plugin-sdk",
+        "publish:sdk": "npm publish --workspace=@insurance-app-saas/plugin-sdk"
     },
     "dependencies": {
         "@nestjs/platform-fastify": "^11.1.6"
